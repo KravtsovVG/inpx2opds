@@ -246,20 +246,19 @@ EOF;
     }
     function getBookFileInfo($book_id)
     {
-	$sql =<<<EOF
-	    SELECT file_name, file_ext, size FROM "Files" WHERE Files._id=?;
+		$sql =<<<EOF
+	    	SELECT file_name, file_ext, size FROM "Files" WHERE Files._id=?;
 EOF;
-	$stm_sel = $this->prepare($sql);
-	$stm_sel->bindParam(1, $book_id, SQLITE3_INTEGER);
-	$res = $stm_sel->execute();
-	while ($row = $res->fetchArray())
-	{
-	    $file_info['file_name'] = $row['file_name'];
-	    $file_info['file_ext'] = $row['file_ext'];
-	    $file_info['file_size'] = $row['size'];
-	    return $file_info;
-	}
-	return;
+		$stm_sel = $this->prepare($sql);
+		$stm_sel->bindParam(1, $book_id, SQLITE3_INTEGER);
+		$res = $stm_sel->execute();
+		while ($row = $res->fetchArray())
+		{
+	    	$file_info['file_name'] = $row['file_name'];
+		    $file_info['file_ext'] = $row['file_ext'];
+		    $file_info['file_size'] = $row['size'];
+		    return $file_info;
+		}
     }
     function searchBooksByTitle($title)
     {
@@ -294,7 +293,7 @@ EOF;
     function searchBooksByAuthor($author)
     {
 	$sql =<<<EOF
-	    SELECT Files.*, Titles.title AS title FROM "Files"
+	    SELECT Files.*, Titles.title AS title, Authors.author, Authors._id AS author_id FROM "Files"
 	    INNER JOIN "Titles" ON Files.title_id=Titles._id
 	    INNER JOIN "FilesByAuthors" ON Files._id=FilesByAuthors.file_id
 	    INNER JOIN "Authors" ON FilesByAuthors.author_id=Authors._id
@@ -303,18 +302,20 @@ EOF;
 EOF;
 	$files;
 	$stm_sel = $this->prepare($sql);
-	$stm_sel->bindParam(1, $author, SQLITE3_INTEGER);
+	$stm_sel->bindParam(1, $author, SQLITE3_TEXT);
 	$res = $stm_sel->execute();
 	while ($row = $res->fetchArray())
 	{
 	    $files[$row['_id']] = array
 	    (
-		'file_name' => $row['file_name'],
-		'file_size' => $row['size'],
-		'file_ext' => $row['file_ext'],
-		'date_add' => $row['date_add'],
-		'lang' => $row['lang'],
-		'title' => $row['title'],
+			'file_name' => $row['file_name'],
+			'file_size' => $row['size'],
+			'file_ext' => $row['file_ext'],
+			'date_add' => $row['date_add'],
+			'lang' => $row['lang'],
+			'title' => $row['title'],
+			'author' => $row['author'],
+			'author_id' => $row['author_id'],
 	    );
 	}
 	return $files;
