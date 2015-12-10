@@ -25,8 +25,9 @@ class MyDB extends SQLite3
 {
     function __construct($db_filename)
     {
-	$this->open($db_filename);
+		$this->open($db_filename);
     }
+
     function create()
     {
 	$sql =<<<EOF
@@ -66,6 +67,7 @@ EOF;
 	    echo $this->lastErrorMsg();
 	}
     }
+
     function addAuthor($author)
     {
 	$stm_sel = $this->prepare('SELECT _id FROM "Authors" WHERE author=?;');
@@ -82,6 +84,7 @@ EOF;
 	    return $this->addAuthor($author);
 	return 0;
     }
+
     function addGenre($genre)
     {
 	$stm_sel = $this->prepare('SELECT _id FROM "Genres" WHERE genre=?;');
@@ -98,32 +101,33 @@ EOF;
 	    return $this->addGenre($genre);
 	return 0;
     }
+
     function addTitle($title)
     {
-	$stm_sel = $this->prepare('SELECT _id FROM "Titles" WHERE title=?;');
-	$stm_sel->bindParam(1, $title, SQLITE3_TEXT);
-	$res = $stm_sel->execute();
-	while ($row = $res->fetchArray())
-	{
-	    return $row['_id'];
-	}
-
-	$stm_ins = $this->prepare('INSERT INTO "Titles" (title) VALUES (?)');
-	$stm_ins->bindParam(1, $title, SQLITE3_TEXT);
-	if ($stm_ins->execute())
-	    return $this->addTitle($title);
-	return 0;
+		$stm_sel = $this->prepare('SELECT _id FROM "Titles" WHERE title=?;');
+		$stm_sel->bindParam(1, $title, SQLITE3_TEXT);
+		$res = $stm_sel->execute();
+		while ($row = $res->fetchArray())
+		{
+	    	return $row['_id'];
+		}
+		$stm_ins = $this->prepare('INSERT INTO "Titles" (title) VALUES (?)');
+		$stm_ins->bindParam(1, $title, SQLITE3_TEXT);
+		if ($stm_ins->execute())
+			return $this->addTitle($title);
+		return 0;
     }
+
     function addFile($authors_ids, $genres_ids, $title_id, $file_name, $file_ext, $file_size, $lang, $date_add)
     {
-	$stm_ins = $this->prepare('INSERT INTO "Files" (file_name, size, lang, file_ext, title_id) VALUES (?, ?, ?, ?, ?)');
-	$stm_ins->bindParam(1, $file_name, SQLITE3_TEXT);
-	$stm_ins->bindParam(2, $file_size, SQLITE3_INTEGER);
-	$stm_ins->bindParam(3, $lang, SQLITE3_TEXT);
-	$stm_ins->bindParam(4, $file_ext, SQLITE3_TEXT);
-	$stm_ins->bindParam(5, $title_id, SQLITE3_INTEGER);
-	if (!($stm_ins->execute()))
-	    return 0;
+		$stm_ins = $this->prepare('INSERT INTO "Files" (file_name, size, lang, file_ext, title_id) VALUES (?, ?, ?, ?, ?)');
+		$stm_ins->bindParam(1, $file_name, SQLITE3_TEXT);
+		$stm_ins->bindParam(2, $file_size, SQLITE3_INTEGER);
+		$stm_ins->bindParam(3, $lang, SQLITE3_TEXT);
+		$stm_ins->bindParam(4, $file_ext, SQLITE3_TEXT);
+		$stm_ins->bindParam(5, $title_id, SQLITE3_INTEGER);
+		if (!($stm_ins->execute()))
+			return 0;
 
 	$file_id = 0;
 	$stm_sel = $this->prepare('SELECT _id FROM "Files" WHERE file_name=? AND file_ext=?;');
@@ -143,47 +147,52 @@ EOF;
 
 	return $file_id;
     }
+
     function bindFileToAuthors($file_id, $authors_ids)
     {
-	$stm_ins = $this->prepare('INSERT INTO "FilesByAuthors" (file_id, author_id) VALUES (?, ?)');
-	$stm_ins->bindParam(1, $file_id, SQLITE3_INTEGER);
-	foreach ($authors_ids as $author_id)
-	{
-	    $stm_ins->bindParam(2, $author_id, SQLITE3_INTEGER);
-	    $stm_ins->execute();
-	}
+		$stm_ins = $this->prepare('INSERT INTO "FilesByAuthors" (file_id, author_id) VALUES (?, ?)');
+		$stm_ins->bindParam(1, $file_id, SQLITE3_INTEGER);
+		foreach ($authors_ids as $author_id)
+		{
+	    	$stm_ins->bindParam(2, $author_id, SQLITE3_INTEGER);
+		    $stm_ins->execute();
+		}
     }
+
     function bindFileToGenres($file_id, $genres_ids)
     {
-	$stm_ins = $this->prepare('INSERT INTO "FilesByGenres" (file_id, genre_id) VALUES (?, ?)');
-	$stm_ins->bindParam(1, $file_id, SQLITE3_INTEGER);
-	foreach ($genres_ids as $genre_id)
-	{
-	    $stm_ins->bindParam(2, $genre_id, SQLITE3_INTEGER);
-	    $stm_ins->execute();
-	}
+		$stm_ins = $this->prepare('INSERT INTO "FilesByGenres" (file_id, genre_id) VALUES (?, ?)');
+		$stm_ins->bindParam(1, $file_id, SQLITE3_INTEGER);
+		foreach ($genres_ids as $genre_id)
+		{
+	    	$stm_ins->bindParam(2, $genre_id, SQLITE3_INTEGER);
+		    $stm_ins->execute();
+		}
     }
+
     function getGenres()
     {
-	$genres;
-	$ret = $this->query("SELECT * FROM 'Genres';");
-//	$ret = $this->query("SELECT * FROM 'Genres' LIMIT $count OFFSET $skip;");
-	while ($row = $ret->fetchArray())
-	{
-	    $genres[$row['_id']] = $row['genre'];
-	}
-	return $genres;
+		$genres;
+		$ret = $this->query("SELECT * FROM 'Genres';");
+//		$ret = $this->query("SELECT * FROM 'Genres' LIMIT $count OFFSET $skip;");
+		while ($row = $ret->fetchArray())
+		{
+	    	$genres[$row['_id']] = $row['genre'];
+		}
+		return $genres;
     }
+
     function getAuthors()
     {
-	$authros;
-	$ret = $this->query('SELECT * FROM "Authors";');
-	while ($row = $ret->fetchArray())
-	{
-	    $authors[$row['_id']] = $row['author'];
-	}
-	return $authors;
+		$authros;
+		$ret = $this->query('SELECT * FROM "Authors";');
+		while ($row = $ret->fetchArray())
+		{
+	    	$authors[$row['_id']] = $row['author'];
+		}
+		return $authors;
     }
+
     function getBooksByGenre($genre_id)
     {
 	$sql =<<<EOF
@@ -216,6 +225,7 @@ EOF;
 	}
 	return $files;
     }
+
     function getBooksByAuthor($author_id)
     {
 	$sql =<<<EOF
@@ -244,6 +254,7 @@ EOF;
 	}
 	return $files;
     }
+
     function getBookFileInfo($book_id)
     {
 		$sql =<<<EOF
@@ -260,6 +271,7 @@ EOF;
 		    return $file_info;
 		}
     }
+
     function searchBooksByTitle($title)
     {
 	$sql =<<<EOF
@@ -290,6 +302,7 @@ EOF;
 	}
 	return $files;
     }
+
     function searchBooksByAuthor($author)
     {
 	$sql =<<<EOF
@@ -330,7 +343,7 @@ function convert()
     $db = new MyDB($tmp_path . $db_filename);
     if (!$db)
     {
-	die($db->lastErrorMsg());
+		die($db->lastErrorMsg());
     }
     $db->create();
 
@@ -341,67 +354,67 @@ function convert()
     $res = $zip->open($inpx_input);
     if ($res === TRUE)
     {
-	// extract it to the path we determined above
-	$zip->extractTo($tmp_path);
-	$zip->close();
-	echo "$file extracted to $tmp_path\n";
+		// extract it to the path we determined above
+		$zip->extractTo($tmp_path);
+		$zip->close();
+		echo "$file extracted to $tmp_path\n";
     }
     else
     {
-	echo "Doh! I couldn't open $inpx_input\n";
+		echo "Doh! I couldn't open $inpx_input\n";
     }
 
     $sep = chr(0x04);
 
     foreach (glob($tmp_path . '*.inp') as $file)
     {
-	echo $file . "\n";
-	$records = explode("\n", file_get_contents($file));
-	foreach ($records as $rec)
-	{
-	    $array = explode($sep, $rec);
-
-	    $authors_ids = array();
-	    $authors = explode(':', $array[0]);
-	    foreach ($authors as $author)
-	    {
-		if (!empty($author))
+		echo $file . "\n";
+		$records = explode("\n", file_get_contents($file));
+		foreach ($records as $rec)
 		{
-		    $author = trim(str_replace(',', ' ', $author), " -\t\r!@#$%^&*()_=+|");
-		    $author_id = $db->addAuthor($author);
-		    //echo "$author_id -> $author\n";
-		    if ($author_id)
-			$authors_ids[] = $author_id;
+	    	$array = explode($sep, $rec);
+
+			$authors_ids = array();
+			$authors = explode(':', $array[0]);
+			foreach ($authors as $author)
+			{
+				if (!empty($author))
+				{
+					$author = trim(str_replace(',', ' ', $author), " -\t\r!@#$%^&*()_=+|");
+					$author_id = $db->addAuthor($author);
+					//echo "$author_id -> $author\n";
+					if ($author_id)
+						$authors_ids[] = $author_id;
+				}
+			}
+
+			$genres_ids = array();
+			$genres = explode(':', $array[1]);
+			foreach ($genres as $genre)
+			{
+				if (!empty($genre))
+				{
+					$genre_id = $db->addGenre($genre);
+					//echo "$genre_id -> $genre\n";
+					if ($genre_id)
+						$genres_ids[] = $genre_id;
+				}
+			}
+
+			$title = trim($array[2], " \t");
+			$title_id = $db->addTitle($title);
+			//echo "$title_id -> $title\n";
+
+			$file_name = trim($array[5], " \t");
+			$file_size = trim($array[6], " \t");
+			$file_ext = trim($array[9], " \t");
+
+			$date_add = trim($array[10], " \t");
+			$lang = trim($array[11], "' \t");
+
+			//echo "$file_name $file_ext\n";
+			$db->addFile($authors_ids, $genres_ids, $title_id, $file_name, $file_ext, $file_size, $lang, $date_add);
 		}
-	    }
-
-	    $genres_ids = array();
-	    $genres = explode(':', $array[1]);
-	    foreach ($genres as $genre)
-	    {
-		if (!empty($genre))
-		{
-		    $genre_id = $db->addGenre($genre);
-		    //echo "$genre_id -> $genre\n";
-		    if ($genre_id)
-			$genres_ids[] = $genre_id;
-		}
-	    }
-
-	    $title = trim($array[2], " \t");
-	    $title_id = $db->addTitle($title);
-	    //echo "$title_id -> $title\n";
-
-	    $file_name = trim($array[5], " \t");
-	    $file_size = trim($array[6], " \t");
-	    $file_ext = trim($array[9], " \t");
-
-	    $date_add = trim($array[10], " \t");
-	    $lang = trim($array[11], "' \t");
-
-	    //echo "$file_name $file_ext\n";
-	    $db->addFile($authors_ids, $genres_ids, $title_id, $file_name, $file_ext, $file_size, $lang, $date_add);
-	}
     }
 
     $db->close();
@@ -419,30 +432,31 @@ if (!$db)
     die($db->lastErrorMsg());
 }
 
-function beginOPDSFeed($opds, $page, $last)
+function beginOPDSFeed($opds, $page, $last, $title)
 {
     global $search_enable;
 
     header('Content-Type: application/atom+xml; charset=utf-8');
     echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?><feed xmlns=\"http://www.w3.org/2005/Atom\">\r\n";
     if ($search_enable)
-	echo "<link rel=\"search\" type=\"application/atom+xml;profile=opds-catalog\" xmlns:atom=\"http://www.w3.org/2005/Atom\" href=\"?opds=search&amp;terms={searchTerms}&amp;author={atom:author}&amp;title={atom:title}\" />\r\n";
+		echo "<link rel=\"search\" type=\"application/atom+xml;profile=opds-catalog\" xmlns:atom=\"http://www.w3.org/2005/Atom\" href=\"?opds=search&amp;terms={searchTerms}&amp;author={atom:author}&amp;title={atom:title}\" />\r\n";
     if ($page > 0)
     {
-	$prev = $page - 1;
-	echo "<link rel=\"previous\" href=\"?opds=$opds&amp;page=$prev\"/>\r\n";
+		$prev = $page - 1;
+		echo "<link rel=\"previous\" href=\"?opds=$opds&amp;page=$prev\"/>\r\n";
     }
     echo "<link rel=\"self\" href=\"?opds=$opds&amp;page=$page\"/>\r\n";
     if ($last > $page)
     {
-	$next = $page + 1;
-	echo "<link rel=\"next\" href=\"?opds=$opds&amp;page=$next\"/>\r\n";
+		$next = $page + 1;
+		echo "<link rel=\"next\" href=\"?opds=$opds&amp;page=$next\"/>\r\n";
     }
     if ($last != 0)
     {
-	echo "<link rel=\"start\" href=\"?opds=$opds&amp;page=0\"/>\r\n";
-	echo "<link rel=\"last\" href=\"?opds=$opds&amp;page=$last\"/>\r\n";
+		echo "<link rel=\"start\" href=\"?opds=$opds&amp;page=0\"/>\r\n";
+		echo "<link rel=\"last\" href=\"?opds=$opds&amp;page=$last\"/>\r\n";
     }
+	echo "<title>$title</title>\r\n";
 }
 
 function endOPDSFeed()
@@ -458,14 +472,14 @@ function showGenres($parent, $genres, $page)
     $begin = $page * $items_per_page;
     $last = min($total, $begin + $items_per_page);
 
-    beginOPDSFeed($parent, $page, (int)($total / $items_per_page));
+    beginOPDSFeed($parent, $page, (int)($total / $items_per_page), 'Genres');
 
     $keys = array_keys($genres);
     for ($ndx = $begin; $ndx < $last; $ndx++)
     {
-	$id = $keys[$ndx];
-	$genre = $genres[$id];
-	echo "<entry><title>$genre</title><content type=\"text\">$genre</content><link href=\"?opds=$parent/$id\" type=\"application/atom+xml;profile=opds-catalog\" /></entry>\r\n";
+		$id = $keys[$ndx];
+		$genre = $genres[$id];
+		echo "<entry><title>$genre</title><content type=\"text\">$genre</content><link href=\"?opds=$parent/$id\" type=\"application/atom+xml;profile=opds-catalog\" /></entry>\r\n";
     }
 
     endOPDSFeed();
@@ -479,20 +493,20 @@ function showAuthors($parent, $authors, $page)
     $begin = $page * $items_per_page;
     $last = min($total, $begin + $items_per_page);
 
-    beginOPDSFeed($parent, $page, (int)($total / $items_per_page));
+    beginOPDSFeed($parent, $page, (int)($total / $items_per_page), 'Authors');
 
     $keys = array_keys($authors);
     for ($ndx = $begin; $ndx < $last; $ndx++)
     {
-	$id = $keys[$ndx];
-	$author = htmlspecialchars($authors[$id]);
-	echo "<entry><title>$author</title><content type=\"text\">$author</content><link href=\"?opds=$parent/$id\" type=\"application/atom+xml;profile=opds-catalog\" /></entry>\r\n";
+		$id = $keys[$ndx];
+		$author = htmlspecialchars($authors[$id]);
+		echo "<entry><title>$author</title><content type=\"text\">$author</content><link href=\"?opds=$parent/$id\" type=\"application/atom+xml;profile=opds-catalog\" /></entry>\r\n";
     }
 
     endOPDSFeed();
 }
 
-function showBooks($parent, $files, $page)
+function showBooks($parent, $files, $page, $title)
 {
     global $items_per_page;
 
@@ -500,7 +514,7 @@ function showBooks($parent, $files, $page)
     $begin = $page * $items_per_page;
     $last = min($total, $begin + $items_per_page);
 
-    beginOPDSFeed($parent, $page, (int)($total / $items_per_page));
+    beginOPDSFeed($parent, $page, (int)($total / $items_per_page), $title);
 
     if ($total > 0)
     {
@@ -539,14 +553,13 @@ function showBooks($parent, $files, $page)
 
 function showRoot()
 {
-    beginOPDSFeed('', 0, false);
+    beginOPDSFeed('', 0, false, 'OPDS');
 
     echo "<entry><title>By genres</title><content type=\"text\">View collection by genres</content><link href=\"?opds=/genres\" type=\"application/atom+xml;profile=opds-catalog\" /></entry>\r\n";
     echo "<entry><title>By authors</title><content type=\"text\">View collection by authors</content><link href=\"?opds=/authors\" type=\"application/atom+xml;profile=opds-catalog\" /></entry>\r\n";
 
     endOPDSFeed();
 }
-
 
 function download($file_id)
 {
@@ -588,7 +601,7 @@ if (isset($_GET['get']))
 else if (isset($_GET['convert']))
 {
     if ($convert_enable)
-	convert();
+		convert();
 }
 else if (isset($_GET['opds']))
 {
@@ -602,80 +615,80 @@ else if (isset($_GET['opds']))
 
     if (empty($opds) || $count == 0)
     {
-	showRoot();
-	exit;
+		showRoot();
+		exit;
     }
 
     $lvl_last = $levels[$count - 1];
 
     if ($lvl_last === 'authors')
     {
-	$authors = $db->getAuthors();
-	showAuthors($opds, $authors, $page);
+		$authors = $db->getAuthors();
+		showAuthors($opds, $authors, $page);
     }
     elseif ($lvl_last === 'genres')
     {
-	$genres = $db->getGenres();
-	showGenres($opds, $genres, $page);
+		$genres = $db->getGenres();
+		showGenres($opds, $genres, $page);
     }
     elseif ($lvl_last === 'last')
     {
-	// Show newest
+		// Show newest
     }
     elseif ($lvl_last === 'search')
     {
-	$terms;
-	if (isset($_GET['terms']))
-	{
-	    $terms = $_GET['terms'];
-	    if (mb_check_encoding($terms, 'Windows-1251') && !mb_check_encoding($terms, 'UTF-8'))
-		$terms = mb_convert_encoding($terms, 'UTF-8', 'Windows-1251');
-	}
+		$terms;
+		if (isset($_GET['terms']))
+		{
+		    $terms = $_GET['terms'];
+	    	if (mb_check_encoding($terms, 'Windows-1251') && !mb_check_encoding($terms, 'UTF-8'))
+				$terms = mb_convert_encoding($terms, 'UTF-8', 'Windows-1251');
+		}
 
-	if ((!isset($terms)) || (empty($terms)))
-	{
-	    if (isset($_GET['title']))
-	    {
-		$terms = $_GET['title'];
-		if (mb_check_encoding($terms, 'Windows-1251') && !mb_check_encoding($terms, 'UTF-8'))
-		    $terms = mb_convert_encoding($terms, 'UTF-8', 'Windows-1251');
-	    }
-	}
+		if ((!isset($terms)) || (empty($terms)))
+		{
+		    if (isset($_GET['title']))
+	    	{
+				$terms = $_GET['title'];
+				if (mb_check_encoding($terms, 'Windows-1251') && !mb_check_encoding($terms, 'UTF-8'))
+			    	$terms = mb_convert_encoding($terms, 'UTF-8', 'Windows-1251');
+		    }
+		}
 
-	if ((!isset($terms)) || (empty($terms)))
-	{
-	    if (!isset($_GET['author']))
-		exit;
-	    $author = $_GET['author'];
-	    if (mb_check_encoding($author, 'Windows-1251') && !mb_check_encoding($author, 'UTF-8'))
-		$author = mb_convert_encoding($author, 'UTF-8', 'Windows-1251');
-	    if (!empty($author))
-	    {
-		$books = $db->searchBooksByAuthor($author);
-		showBooks($opds, $books, $page);
-		exit;
-	    }
-	}
-	else
-	{
-	    $books = $db->searchBooksByTitle($terms);
-	    showBooks($opds, $books, $page);
-	    exit;
-	}
+		if ((!isset($terms)) || (empty($terms)))
+		{
+		    if (!isset($_GET['author']))
+				exit;
+		    $author = $_GET['author'];
+		    if (mb_check_encoding($author, 'Windows-1251') && !mb_check_encoding($author, 'UTF-8'))
+				$author = mb_convert_encoding($author, 'UTF-8', 'Windows-1251');
+		    if (!empty($author))
+		    {
+				$books = $db->searchBooksByAuthor($author);
+				showBooks($opds, $books, $page, "Search results: ".$author);
+				exit;
+		    }
+		}
+		else
+		{
+		    $books = $db->searchBooksByTitle($terms);
+	    	showBooks($opds, $books, $page, "Search results: ".$terms);
+		    exit;
+		}
     }
     elseif ($count > 1)
     {
-	$lvl_parent = $levels[$count - 2];
-	if ($lvl_parent === 'genres')
-	{
-	    $books = $db->getBooksByGenre($lvl_last);
-	    showBooks($opds, $books, $page);
-	}
-	if ($lvl_parent === 'authors')
-	{
-	    $books = $db->getBooksByAuthor($lvl_last);
-	    showBooks($opds, $books, $page);
-	}
+		$lvl_parent = $levels[$count - 2];
+		if ($lvl_parent === 'genres')
+		{
+		    $books = $db->getBooksByGenre($lvl_last);
+	    	showBooks($opds, $books, $page, "Genre: ".$lvl_last);
+		}
+		if ($lvl_parent === 'authors')
+		{
+		    $books = $db->getBooksByAuthor($lvl_last);
+	    	showBooks($opds, $books, $page, "Author: ".$lvl_last);
+		}
     }
 }
 else
