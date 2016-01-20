@@ -8,16 +8,18 @@ $inpx_filename = 'rp4-fb2-librusec-russian-2015-08-18.inpx';
 $inpx_input = $lib_path . $inpx_filename;
 $tmp_path = '/tmp/opds/';
 $items_per_page = 50;
+$default_encoding='Windows-1251';
+//$authors_letters_level = array("A", "B", "C", "D", "E", "F", "G", "I", "J", "K", "L", "M", "N", "O");
 
 // TODO:
 // - cleanup temporary directory after convertation
 // - get rid of fixed filename for .inpx
-// - keep dates on convertation
+// ~ keep dates on convertation
 // - extract convertation script to separate file (?)
 // - support alphabet level for authors
 // - support search by authors and title simuously
 // - archive files on download
-// - fill authors while browsing author's feed
+// ~ fill authors while browsing author's feed
 
 setlocale(LC_ALL, "UTF-8");
 
@@ -70,36 +72,36 @@ EOF;
 
     function addAuthor($author)
     {
-	$stm_sel = $this->prepare('SELECT _id FROM "Authors" WHERE author=?;');
-	$stm_sel->bindParam(1, $author, SQLITE3_TEXT);
-	$res = $stm_sel->execute();
-	while ($row = $res->fetchArray())
-	{
-	    return $row['_id'];
-	}
+		$stm_sel = $this->prepare('SELECT _id FROM "Authors" WHERE author=?;');
+		$stm_sel->bindParam(1, $author, SQLITE3_TEXT);
+		$res = $stm_sel->execute();
+		while ($row = $res->fetchArray())
+		{
+	    	return $row['_id'];
+		}
 
-	$stm_ins = $this->prepare('INSERT INTO "Authors" (author) VALUES (?)');
-	$stm_ins->bindParam(1, $author, SQLITE3_TEXT);
-	if ($stm_ins->execute())
-	    return $this->addAuthor($author);
-	return 0;
+		$stm_ins = $this->prepare('INSERT INTO "Authors" (author) VALUES (?)');
+		$stm_ins->bindParam(1, $author, SQLITE3_TEXT);
+		if ($stm_ins->execute())
+	    	return $this->addAuthor($author);
+		return 0;
     }
 
     function addGenre($genre)
     {
-	$stm_sel = $this->prepare('SELECT _id FROM "Genres" WHERE genre=?;');
-	$stm_sel->bindParam(1, $genre, SQLITE3_TEXT);
-	$res = $stm_sel->execute();
-	while ($row = $res->fetchArray())
-	{
-	    return $row['_id'];
-	}
+		$stm_sel = $this->prepare('SELECT _id FROM "Genres" WHERE genre=?;');
+		$stm_sel->bindParam(1, $genre, SQLITE3_TEXT);
+		$res = $stm_sel->execute();
+		while ($row = $res->fetchArray())
+		{
+		    return $row['_id'];
+		}
 
-	$stm_ins = $this->prepare('INSERT INTO "Genres" (genre) VALUES (?)');
-	$stm_ins->bindParam(1, $genre, SQLITE3_TEXT);
-	if ($stm_ins->execute())
-	    return $this->addGenre($genre);
-	return 0;
+		$stm_ins = $this->prepare('INSERT INTO "Genres" (genre) VALUES (?)');
+		$stm_ins->bindParam(1, $genre, SQLITE3_TEXT);
+		if ($stm_ins->execute())
+		    return $this->addGenre($genre);
+		return 0;
     }
 
     function addTitle($title)
@@ -120,32 +122,33 @@ EOF;
 
     function addFile($authors_ids, $genres_ids, $title_id, $file_name, $file_ext, $file_size, $lang, $date_add)
     {
-		$stm_ins = $this->prepare('INSERT INTO "Files" (file_name, size, lang, file_ext, title_id) VALUES (?, ?, ?, ?, ?)');
+		$stm_ins = $this->prepare('INSERT INTO "Files" (file_name, size, lang, file_ext, title_id, date_add) VALUES (?, ?, ?, ?, ?, ?)');
 		$stm_ins->bindParam(1, $file_name, SQLITE3_TEXT);
 		$stm_ins->bindParam(2, $file_size, SQLITE3_INTEGER);
 		$stm_ins->bindParam(3, $lang, SQLITE3_TEXT);
 		$stm_ins->bindParam(4, $file_ext, SQLITE3_TEXT);
 		$stm_ins->bindParam(5, $title_id, SQLITE3_INTEGER);
+		$stm_ins->bindParam(6, $date_add, SQLITE3_TEXT);
 		if (!($stm_ins->execute()))
 			return 0;
 
-	$file_id = 0;
-	$stm_sel = $this->prepare('SELECT _id FROM "Files" WHERE file_name=? AND file_ext=?;');
-	$stm_sel->bindParam(1, $file_name, SQLITE3_TEXT);
-	$stm_sel->bindParam(2, $file_ext, SQLITE3_TEXT);
-	$res = $stm_sel->execute();
-	while ($row = $res->fetchArray())
-	{
-	    $file_id = $row['_id'];
-	    break;
-	}
-	if ($file_id == 0)
-	    return 0;
+		$file_id = 0;
+		$stm_sel = $this->prepare('SELECT _id FROM "Files" WHERE file_name=? AND file_ext=?;');
+		$stm_sel->bindParam(1, $file_name, SQLITE3_TEXT);
+		$stm_sel->bindParam(2, $file_ext, SQLITE3_TEXT);
+		$res = $stm_sel->execute();
+		while ($row = $res->fetchArray())
+		{
+	    	$file_id = $row['_id'];
+		    break;
+		}
+		if ($file_id == 0)
+		    return 0;
 
-	$this->bindFileToAuthors($file_id, $authors_ids);
-	$this->bindFileToGenres($file_id, $genres_ids);
+		$this->bindFileToAuthors($file_id, $authors_ids);
+		$this->bindFileToGenres($file_id, $genres_ids);
 
-	return $file_id;
+		return $file_id;
     }
 
     function bindFileToAuthors($file_id, $authors_ids)
@@ -195,64 +198,71 @@ EOF;
 
     function getBooksByGenre($genre_id)
     {
-	$sql =<<<EOF
-	    SELECT Files.*, Titles.title AS title, Authors.author as author, Authors._id as author_id FROM "Files"
-	    INNER JOIN "Titles" ON Files.title_id=Titles._id
-	    INNER JOIN "FilesByGenres" ON Files._id=FilesByGenres.file_id
-	    INNER JOIN "FilesByAuthors" ON Files._id=FilesByAuthors.file_id
-	    INNER JOIN "Authors" ON FilesByAuthors.author_id=Authors._id
-	    WHERE FilesByGenres.genre_id=?
-	    ORDER BY title;
+		$sql =<<<EOF
+		    SELECT Files.*, Titles.title AS title, Authors.author as author, Authors._id as author_id FROM "Files"
+	    		INNER JOIN "Titles" ON Files.title_id=Titles._id
+			    INNER JOIN "FilesByGenres" ON Files._id=FilesByGenres.file_id
+			    INNER JOIN "FilesByAuthors" ON Files._id=FilesByAuthors.file_id
+			    INNER JOIN "Authors" ON FilesByAuthors.author_id=Authors._id
+		    WHERE FilesByGenres.genre_id=?
+	    	ORDER BY title;
 EOF;
-	$files;
-	$stm_sel = $this->prepare($sql);
-	$stm_sel->bindParam(1, $genre_id, SQLITE3_INTEGER);
-	$res = $stm_sel->execute();
-	while ($row = $res->fetchArray())
-	{
-	    $files[$row['_id']] = array
-	    (
-		'file_name' => $row['file_name'],
-		'file_size' => $row['size'],
-		'file_ext' => $row['file_ext'],
-		'date_add' => $row['date_add'],
-		'lang' => $row['lang'],
-		'title' => $row['title'],
-		'author' => $row['author'],
-		'author_id' => $row['author_id'],
-	    );
-//	    var_dump($row);
-	}
-	return $files;
+		$files;
+		$stm_sel = $this->prepare($sql);
+		$stm_sel->bindParam(1, $genre_id, SQLITE3_INTEGER);
+		$res = $stm_sel->execute();
+		while ($row = $res->fetchArray())
+		{
+	    	$files[$row['_id']] = array
+		    (
+				'file_name' => $row['file_name'],
+				'file_size' => $row['size'],
+				'file_ext' => $row['file_ext'],
+				'date_add' => $row['date_add'],
+				'lang' => $row['lang'],
+				'title' => $row['title'],
+				'author' => $row['author'],
+				'author_id' => $row['author_id'],
+		    );
+//	    	var_dump($row);
+		}
+		return $files;
     }
 
     function getBooksByAuthor($author_id)
     {
-	$sql =<<<EOF
-	    SELECT Files.*, Titles.title AS title FROM "Files"
-	    INNER JOIN "Titles" ON Files.title_id=Titles._id
-	    INNER JOIN "FilesByAuthors" ON Files._id=FilesByAuthors.file_id
-	    WHERE FilesByAuthors.author_id=?
-	    ORDER BY title;
+		$sql =<<<EOF
+			SELECT Files.*, Titles.title AS title, Authors.author, Authors._id AS author_id FROM "Files"
+				INNER JOIN "Titles" ON Files.title_id=Titles._id
+				INNER JOIN "FilesByAuthors" ON Files._id=FilesByAuthors.file_id
+				INNER JOIN "Authors" ON FilesByAuthors.author_id=Authors._id
+			WHERE Files._id IN (
+				SELECT Files._id FROM "Files"
+					INNER JOIN "FilesByAuthors" ON Files._id=FilesByAuthors.file_id
+				WHERE FilesByAuthors.author_id=?
+			)
+			ORDER BY title;
 EOF;
-	$files;
-	$stm_sel = $this->prepare($sql);
-	$stm_sel->bindParam(1, $author_id, SQLITE3_INTEGER);
-	$res = $stm_sel->execute();
-	while ($row = $res->fetchArray())
-	{
-	    $files[$row['_id']] = array
-	    (
-		'file_name' => $row['file_name'],
-		'file_size' => $row['size'],
-		'file_ext' => $row['file_ext'],
-		'date_add' => $row['date_add'],
-		'lang' => $row['lang'],
-		'title' => $row['title'],
-	    );
-//	    var_dump($row);
-	}
-	return $files;
+		$files;
+		$stm_sel = $this->prepare($sql);
+		$stm_sel->bindParam(1, $author_id, SQLITE3_INTEGER);
+		$res = $stm_sel->execute();
+		while ($row = $res->fetchArray())
+		{
+	    	$files[$row['_id']] = array
+		    (
+				'file_name' => $row['file_name'],
+				'file_size' => $row['size'],
+				'file_ext' => $row['file_ext'],
+				'date_add' => $row['date_add'],
+				'lang' => $row['lang'],
+				'title' => $row['title'],
+				'author' => $row['author'],
+				'author_id' => $row['author_id'],
+		    );
+//	    	var_dump($row);
+		}
+		return $files;
     }
 
     function getBookFileInfo($book_id)
@@ -305,33 +315,38 @@ EOF;
 
     function searchBooksByAuthor($author)
     {
-	$sql =<<<EOF
-	    SELECT Files.*, Titles.title AS title, Authors.author, Authors._id AS author_id FROM "Files"
-	    INNER JOIN "Titles" ON Files.title_id=Titles._id
-	    INNER JOIN "FilesByAuthors" ON Files._id=FilesByAuthors.file_id
-	    INNER JOIN "Authors" ON FilesByAuthors.author_id=Authors._id
-	    WHERE Authors.author LIKE '%' || ? || '%'
-	    ORDER BY title;
+		$sql =<<<EOF
+			SELECT Files.*, Titles.title AS title, Authors.author, Authors._id AS author_id FROM "Files"
+				INNER JOIN "Titles" ON Files.title_id=Titles._id
+				INNER JOIN "FilesByAuthors" ON Files._id=FilesByAuthors.file_id
+				INNER JOIN "Authors" ON FilesByAuthors.author_id=Authors._id
+			WHERE Files._id IN (
+				SELECT Files._id FROM "Files"
+					INNER JOIN "FilesByAuthors" ON Files._id=FilesByAuthors.file_id
+					INNER JOIN "Authors" ON FilesByAuthors.author_id=Authors._id
+				WHERE Authors.author LIKE '%' || ? || '%'
+			)
+			ORDER BY title;
 EOF;
-	$files;
-	$stm_sel = $this->prepare($sql);
-	$stm_sel->bindParam(1, $author, SQLITE3_TEXT);
-	$res = $stm_sel->execute();
-	while ($row = $res->fetchArray())
-	{
-	    $files[$row['_id']] = array
-	    (
-			'file_name' => $row['file_name'],
-			'file_size' => $row['size'],
-			'file_ext' => $row['file_ext'],
-			'date_add' => $row['date_add'],
-			'lang' => $row['lang'],
-			'title' => $row['title'],
-			'author' => $row['author'],
-			'author_id' => $row['author_id'],
-	    );
-	}
-	return $files;
+		$files;
+		$stm_sel = $this->prepare($sql);
+		$stm_sel->bindParam(1, $author, SQLITE3_TEXT);
+		$res = $stm_sel->execute();
+		while ($row = $res->fetchArray())
+		{
+	    	$files[$row['_id']] = array
+		    (
+				'file_name' => $row['file_name'],
+				'file_size' => $row['size'],
+				'file_ext' => $row['file_ext'],
+				'date_add' => $row['date_add'],
+				'lang' => $row['lang'],
+				'title' => $row['title'],
+				'author' => $row['author'],
+				'author_id' => $row['author_id'],
+		    );
+		}
+		return $files;
     }
 }	// End of MyDB class
 
@@ -518,34 +533,34 @@ function showBooks($parent, $files, $page, $title)
 
     if ($total > 0)
     {
-	$id_prev = 0;
-	$keys = array_keys($files);
-	for ($ndx = $begin; $ndx < $last; $ndx++)
-	{
-	    $id = $keys[$ndx];
-	    if ($id != $id_prev)
-	    {
-		if ($id_prev != 0)
-		    echo "</entry>\r\n";
-		$file = $files[$id];
+		$id_prev = 0;
+		$keys = array_keys($files);
+		for ($ndx = $begin; $ndx < $last; $ndx++)
+		{
+	    	$id = $keys[$ndx];
+		    if ($id != $id_prev)	// Start new entry
+	    	{
+				if ($id_prev != 0)
+				    echo "</entry>\r\n";
+				$file = $files[$id];
 
-		$file_name = $file['file_name'];
-		$file_ext = $file['file_ext'];
-		$file_size = $file['file_size'];
-		$date_add = $file['date_add'];
-		$title = htmlspecialchars($file['title']);
-		echo "<entry><updated>$date_add</updated><title>$title</title><content type=\"text\">Filename: $file_name.$file_ext Size: $file_size bytes</content><link href=\"?get=$id\" rel=\"http://opds-spec.org/acquisition/open-access\" type=\"application/fb2\" />";
-		$id_prev = $id;
-	    }
-	    if (isset($file['author_id']))
-	    {
-		$author_id = $file['author_id'];
-		$author = htmlspecialchars($file['author']);
-		echo "<author><name>$author</name><uri>?opds=authors/$author_id</uri></author>";
-	    }
-	}
+				$file_name = $file['file_name'];
+				$file_ext = $file['file_ext'];
+				$file_size = $file['file_size'];
+				$date_add = $file['date_add'];
+				$title = htmlspecialchars($file['title']);
+				echo "<entry><updated>$date_add</updated><title>$title</title><content type=\"text\">Filename: $file_name.$file_ext Size: $file_size bytes</content><link href=\"?get=$id\" rel=\"http://opds-spec.org/acquisition/open-access\" type=\"application/fb2\" />";
+				$id_prev = $id;
+		    }
+		    if (isset($file['author_id']))	// Add author
+	    	{
+				$author_id = $file['author_id'];
+				$author = htmlspecialchars($file['author']);
+				echo "<author><name>$author</name><uri>?opds=authors/$author_id</uri></author>";
+		    }
+		}
 
-	echo "</entry>\r\n";
+		echo "</entry>\r\n";
     }
 
     endOPDSFeed();
@@ -641,8 +656,8 @@ else if (isset($_GET['opds']))
 		if (isset($_GET['terms']))
 		{
 		    $terms = $_GET['terms'];
-	    	if (mb_check_encoding($terms, 'Windows-1251') && !mb_check_encoding($terms, 'UTF-8'))
-				$terms = mb_convert_encoding($terms, 'UTF-8', 'Windows-1251');
+	    	if (mb_check_encoding($terms, $default_encoding) && !mb_check_encoding($terms, 'UTF-8'))
+				$terms = mb_convert_encoding($terms, 'UTF-8', $default_encoding);
 		}
 
 		if ((!isset($terms)) || (empty($terms)))
@@ -650,8 +665,8 @@ else if (isset($_GET['opds']))
 		    if (isset($_GET['title']))
 	    	{
 				$terms = $_GET['title'];
-				if (mb_check_encoding($terms, 'Windows-1251') && !mb_check_encoding($terms, 'UTF-8'))
-			    	$terms = mb_convert_encoding($terms, 'UTF-8', 'Windows-1251');
+				if (mb_check_encoding($terms, $default_encoding) && !mb_check_encoding($terms, 'UTF-8'))
+			    	$terms = mb_convert_encoding($terms, 'UTF-8', $default_encoding);
 		    }
 		}
 
@@ -660,8 +675,8 @@ else if (isset($_GET['opds']))
 		    if (!isset($_GET['author']))
 				exit;
 		    $author = $_GET['author'];
-		    if (mb_check_encoding($author, 'Windows-1251') && !mb_check_encoding($author, 'UTF-8'))
-				$author = mb_convert_encoding($author, 'UTF-8', 'Windows-1251');
+		    if (mb_check_encoding($author, $default_encoding) && !mb_check_encoding($author, 'UTF-8'))
+				$author = mb_convert_encoding($author, 'UTF-8', $default_encoding);
 		    if (!empty($author))
 		    {
 				$books = $db->searchBooksByAuthor($author);
